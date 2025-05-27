@@ -1,0 +1,4 @@
+venv/
+.env
+bot_regras.py
+bot_senac.py
