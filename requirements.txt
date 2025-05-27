@@ -1,0 +1,6 @@
+pytelegrambotapi
+google-generativeai
+python-dotenv
+requests
+telebot
+pylance
