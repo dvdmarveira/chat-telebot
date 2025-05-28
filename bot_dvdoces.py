@@ -32,9 +32,22 @@ def start(mensagem):
   bot.send_message(mensagem.chat.id, texto, reply_markup=markup, parse_mode="Markdown")
 
 # Resposta aos botões do menu
+@bot.callback_query_handler(func=lambda call: True)
+def responder_botoes(call):
+    if call.data == "cardapio":
+        bot.send_message(call.message.chat.id, "🍰 Nosso cardápio:\n\n- Bolo de chocolate\n- Cupcake de morango\n- Brownie recheado\n\nAcesse mais detalhes no nosso Instagram: @dvdoces")
 
+    elif call.data == "pedido":
+        bot.send_message(call.message.chat.id, "📦 Para fazer um pedido, envie uma mensagem no nosso WhatsApp: https://wa.me/5581999999999\nOu informe seu pedido aqui e iremos anotar! 😊")
 
+    elif call.data == "horario":
+        bot.send_message(call.message.chat.id, "⏰ Funcionamos de segunda a sábado, das 10h às 18h.")
 
+    elif call.data == "contato":
+        bot.send_message(call.message.chat.id, "📍 Rua das Delícias, 123 – Centro\n📞 (81) 99999-9999\nInstagram: @dvdoces")
+
+    elif call.data == "atendente":
+        bot.send_message(call.message.chat.id, "💬 Você será redirecionado para o nosso atendimento humano:\nhttps://wa.me/5581999999999")
 
 print("Bot em execução...")
 bot.infinity_polling()
