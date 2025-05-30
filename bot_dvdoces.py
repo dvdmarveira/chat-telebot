@@ -9,6 +9,12 @@ CHAVE_API = os.getenv("CHAVE_API")
 
 bot = telebot.TeleBot(CHAVE_API)
 
+produtos_precos = {
+    "Bolo de chocolate": 10.00,
+    "Cupcake de morango": 5.00,
+    "Brownie recheado": 7.50
+}
+
 # Dicionários para armazenar o progresso e os dados dos pedidos
 usuarios_pedindo = {}
 etapas_pedido = {}
@@ -43,9 +49,9 @@ def responder_botoes(call):
     if call.data == "cardapio":
         texto_cardapio = (
             "🍰 *Nosso cardápio:*\n\n"
-            "- Bolo de chocolate\n"
-            "- Cupcake de morango\n"
-            "- Brownie recheado\n\n"
+            "- Bolo de chocolate - R$ 10,00\n"
+            "- Cupcake de morango - R$ 5,00\n"
+            "- Brownie recheado - R$ 7,50\n\n"
             "Você pode ver mais detalhes em nosso Instagram: @dvdoces\n\n"
             "... ou já pode fazer o seu pedido e garantir uma de nossas delícias!"
         )
@@ -116,13 +122,23 @@ def processar_pedido(mensagem):
 # Função para mostrar o resumo do pedido
 def confirmar_pedido(chat_id):
     dados = usuarios_pedindo[chat_id]
+    produto = dados.get('produto')
+    quantidade = int(dados.get('quantidade'))
+    preco_unitario = produtos_precos.get(produto,0)
+    valor_total = preco_unitario * quantidade 
+    cliente = dados.get('nome')
+    forma = dados.get('forma')
+    endereco = dados.get('endereco')
+    
     texto = "✅ *Resumo do Pedido:*\n"
-    texto += f"- Produto: {dados.get('produto')}\n"
-    texto += f"- Quantidade: {dados.get('quantidade')}\n"
-    texto += f"- Cliente: {dados.get('nome')}\n"
-    texto += f"- Forma: {dados.get('forma')}\n"
-    if dados.get("forma") == "📍 Entrega":
-        texto += f"- Endereço: {dados.get('endereco')}\n"
+    texto += f"- Produto: {produto}\n"
+    texto += f"- Quantidade: {quantidade}\n"
+    texto += f"- Preço unitário: R$ {preco_unitario:.2f}\n"
+    texto += f"- Valor total: R$ {valor_total:.2f}\n"
+    texto += f"- Cliente: {cliente}\n"
+    texto += f"- Forma: {forma}\n"
+    if {forma} == "📍 Entrega":
+        texto += f"- Endereço: {endereco}\n"
 
     texto += "\nSeu pedido foi anotado com sucesso! 🍬 Em breve entraremos em contato."
 
