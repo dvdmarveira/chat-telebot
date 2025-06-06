@@ -64,16 +64,6 @@ def start(mensagem):
 @bot.callback_query_handler(func=lambda call: True)
 def responder_botoes(call):
     chat_id = call.message.chat.id
-    
-    # if call.data == "cardapio":
-    #     texto_cardapio = (
-    #         "🍰 *Nosso cardápio:*\n\n"
-    #         "- Bolo de chocolate - R$ 10,00\n"
-    #         "- Cupcake de morango - R$ 5,00\n"
-    #         "- Brownie recheado - R$ 7,50\n\n"
-    #         "Você pode ver mais detalhes em nosso Instagram: @dvdoces\n\n"
-    #         "... ou já pode fazer o seu pedido e garantir uma de nossas delícias!"
-    #     )
 
     if call.data == "cardapio":
         texto_cardapio = "🍰 *Nosso cardápio:*\n\n"
@@ -87,8 +77,6 @@ def responder_botoes(call):
             "Você pode ver mais detalhes em nosso Instagram: @dvdoces\n\n"
             "... ou já pode fazer o seu pedido e garantir uma de nossas delícias!"
         )
-
-        # bot.send_message(call.message.chat.id, texto_cardapio, parse_mode="Markdown")
 
         markup_cardapio = types.InlineKeyboardMarkup()
         markup_cardapio.add(
@@ -113,12 +101,12 @@ def responder_botoes(call):
             emoji = "🍰" if categoria == "Bolos" else "🧁" if categoria == "Cupcakes" else "🍫"
             markup_pedido.add(types.InlineKeyboardButton(f"{emoji} {categoria}", callback_data=f"categoria_{categoria}"))
         bot.send_message(chat_id, "Escolha uma categoria:", reply_markup=markup_pedido)
-        # bot.send_message(chat_id, "📦 Qual doce você gostaria de pedir?")
 
     elif call.data.startswith("categoria_"):
         categoria = call.data.split("_", 1)[1]
         usuarios_pedindo[chat_id]["categoria"] = categoria
         etapas_pedido[chat_id] = "produto"
+        
         # Cria botões para os produtos da categoria escolhida
         markup_produto = types.InlineKeyboardMarkup()
         for produto in categorias_produtos[categoria].keys():
@@ -160,11 +148,6 @@ def responder_botoes(call):
 def processar_pedido(mensagem):
     chat_id = mensagem.chat.id
     etapa = etapas_pedido[chat_id]
-
-    # if etapa == "produto":
-    #     usuarios_pedindo[chat_id]["produto"] = mensagem.text
-    #     etapas_pedido[chat_id] = "quantidade"
-    #     bot.send_message(chat_id, "Quantas unidades você deseja?")
 
     if etapa == "quantidade":
         try:
@@ -244,11 +227,6 @@ def resumo_pedido(chat_id):
     bot.send_message(chat_id, texto, parse_mode="Markdown")
     bot.send_message(chat_id, "Confirme o seu pedido para que possamos seguir.", reply_markup=markup_confirmar_pedido)
     
-    
-    # texto += "\nSeu pedido foi anotado com sucesso! 🍬 Em breve entraremos em contato."
-
-    # bot.send_message(chat_id, texto, parse_mode="Markdown")
-
     # Limpa os dados do pedido
     etapas_pedido.pop(chat_id)
     usuarios_pedindo.pop(chat_id)
