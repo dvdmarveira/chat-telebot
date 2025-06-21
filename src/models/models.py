@@ -3,42 +3,62 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy_utils.types import ChoiceType
 
 # Cria a conexão com o banco
-db = create_engine("sqlite:///database.db")
+db = create_engine("sqlite:///banco.db")
 
 # Cria a base do banco de dados
 Base = declarative_base()
 
 # Cria as classes/tabelas do banco
+# Usuários
+class User(Base):
+  __tablename__ = "users"
+  
+  id = Column("id", Integer, primary_key=True, autoincrement=True)
+  name = Column("name", String, nullable=False)
+  email = Column("email", String, nullable=False)
+  password = Column("password", String, nullable=False)
+  gender = Column("gender", String)
+  admin = Column("admin", Boolean, default=False)
+  active = Column("active", Boolean, default=True)
+
+  def __init__(self, name, email, password, gender, admin=False, active=True):
+    self.name = name
+    self.email = email
+    self.password = password
+    self.gender = gender
+    self.admin = admin
+    self.active = active
+    
 # Clientes
 class Customer(Base):
   __tablename__ = "customers"
   
   id = Column("id", Integer, primary_key=True, autoincrement=True)
   name = Column("name", String, nullable=False)
-  age = Column("age", Integer)
-  cpf = Column("cpf", String)
-  number = Column("number", String, nullable=False)
+  gender = Column("gender", String)
+  address = Column("address", String)
+  cellphone = Column("cellphone", String, nullable=False)
   
-  def __init__(self, name, age, cpf, number):
+  def __init__(self, name, gender, address, cellphone):
     self.name = name
-    self.age = age
-    self.cpf = cpf
-    self.number = number
+    self.gender = gender
+    self.address = address
+    self.cellphone = cellphone
   
 # Pedidos
 class Order(Base):
   __tablename__ = "orders"
   
-  ORDERS_STATUS = (
-    ("PENDING", "PENDING"),
-    ("FINALIZED", "FINALIZED"),
-    ("CANCELLED", "CANCELLED"),
-  )
+  # ORDERS_STATUS = (
+  #   ("PENDING", "PENDING"),
+  #   ("FINALIZED", "FINALIZED"),
+  #   ("CANCELLED", "CANCELLED"),
+  # )
   
   id = Column("id", Integer, primary_key=True, autoincrement=True)
   customer = Column("customer", ForeignKey("customers.id"))
   price = Column("price", Float)
-  status = Column("status", ChoiceType(choices=ORDERS_STATUS)) # pendente, finalizado, cancelado
+  status = Column("status", String) # pendente, finalizado, cancelado
   # items = 
   
   def __init__(self, customer, price=0, status="PENDING"):
@@ -50,16 +70,16 @@ class Order(Base):
 class Order_Items(Base):
   __tablename__ = "order_items"
 
-  FLAVOR_ITEMS = (
-    ("CHOCOLATE", "CHOCOLATE"),
-    ("MACAXEIRA", "MACAXEIRA"),
-    ("COCO", "COCO"),
-    ("MILHO", "MILHO"),
-  )
+  # FLAVOR_ITEMS = (
+  #   ("CHOCOLATE", "CHOCOLATE"),
+  #   ("MACAXEIRA", "MACAXEIRA"),
+  #   ("COCO", "COCO"),
+  #   ("MILHO", "MILHO"),
+  # )
   
   id = Column("id", Integer, primary_key=True, autoincrement=True)
   amount = Column("amount", Integer)
-  flavor = Column("flavor", ChoiceType(choices=FLAVOR_ITEMS))
+  flavor = Column("flavor", String)
   unit_price = Column("unit_price", Float)
   order = Column("order", ForeignKey("orders.id"))
   
