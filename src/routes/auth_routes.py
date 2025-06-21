@@ -1,6 +1,6 @@
-from fastapi import APIRouter
-from src.models.models import db, User
-from sqlalchemy.orm import sessionmaker
+from fastapi import APIRouter, Depends
+from src.models.models import User
+from src.services.session_dependencies_service import get_session
 
 auth_router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -12,9 +12,8 @@ async def authenticate():
   return {"oi"}
 
 @auth_router.post("/sign_up")
-async def sign_up(name: str, email: str, password: str, gender: str):
-  Session = sessionmaker(bind=db)
-  session = Session()
+async def sign_up(name: str, email: str, password: str, gender: str, session = Depends(get_session)):
+
   user = session.query(User).filter(User.email==email).first()
   if user:
     # Já existe usuário com esse e-mail
