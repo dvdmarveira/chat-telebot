@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from src.models.models import User
-from src.services.session_dependencies_service import get_session
-from main import bcrypt_context, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY
+from src.services.session_dependency_service import get_session
+from src.services.verify_token_dependency_service import verify_token
+from src.configs.config import bcrypt_context, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY
 from src.schemas.user_schema import UserSchema
 from src.schemas.login_schema import LoginSchema
 from sqlalchemy.orm import Session
@@ -10,10 +11,11 @@ from datetime import datetime, timedelta, timezone
 
 auth_router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-def create_token(id_user):
-  expiration_date = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-  dictionary_info = {"sub": id_user,
-                     "expiration": expiration_date}
+def create_token(id_user, token_duration=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)):
+  expiration_date = datetime.now(timezone.utc) + token_duration
+  expiration_timestamp = int(expiration_date.timestamp())
+  dictionary_info = {"sub": str(id_user),
+                     "expiration": expiration_timestamp} # se fosse 'exp' seria reconhecido pelo JWT automaticamente
   encoded_jwt = jwt.encode(dictionary_info, SECRET_KEY, ALGORITHM )
   return encoded_jwt
 
@@ -52,6 +54,15 @@ async def login(login_schema: LoginSchema, session: Session = Depends(get_sessio
     raise HTTPException(status_code=400, detail="user not registered or invalid credentials")
   else:
     access_token = create_token(user.id)
+    refresh_token = create_token(user.id, token_duration=timedelta(days=7))
     return {"access_token": access_token,
+            "refresh_token": refresh_token,
             "token_type": "Bearer"}
     
+@auth_router.get("/refresh")
+async def use_refresh_token(user: User = Depends(verify_token)):
+  access_token = create_token(user.id)
+  return {
+    "access_token": access_token,
+    "token_type": "Bearer"
+  }
