@@ -8,6 +8,7 @@ from src.schemas.login_schema import LoginSchema
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
 from datetime import datetime, timedelta, timezone
+from fastapi.security import OAuth2PasswordRequestForm
 
 auth_router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -27,17 +28,12 @@ def authenticate_user(email, password, session):
     return False
   return user
   
-@auth_router.get("/")
-async def authenticate():
-  """
-  This is the default authentication route
-  """
-  return {"default route"}
-
 @auth_router.post("/sign_up")
-async def sign_up(user_schema: UserSchema, session: Session = Depends(get_session)):
-  user = session.query(User).filter(User.email==user_schema.email).first()
-  if user:
+async def sign_up(user_schema: UserSchema, session: Session = Depends(get_session), user: User = Depends(verify_token)):
+  if not user.admin:
+    raise HTTPException(status_code=401, detail="Authorization denied")
+  existing_user = session.query(User).filter(User.email==user_schema.email).first()
+  if existing_user:
     # Já existe usuário com esse e-mail
     raise HTTPException(status_code=400, detail="email already exists")
   else:
@@ -57,6 +53,16 @@ async def login(login_schema: LoginSchema, session: Session = Depends(get_sessio
     refresh_token = create_token(user.id, token_duration=timedelta(days=7))
     return {"access_token": access_token,
             "refresh_token": refresh_token,
+            "token_type": "Bearer"}
+    
+@auth_router.post("/login-form") # Para testar rotas protegidas pela doc nativa FastAPI
+async def login_form(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):
+  user = authenticate_user(form_data.username, form_data.password, session)
+  if not user:
+    raise HTTPException(status_code=400, detail="user not registered or invalid credentials")
+  else:
+    access_token = create_token(user.id)
+    return {"access_token": access_token,
             "token_type": "Bearer"}
     
 @auth_router.get("/refresh")
