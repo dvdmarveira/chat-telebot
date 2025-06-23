@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine, Column, String, Integer, Boolean, Float, ForeignKey 
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy_utils.types import ChoiceType
 
 # Cria a conexão com o banco
@@ -59,12 +59,19 @@ class Order(Base):
   customer = Column("customer", ForeignKey("customers.id"))
   price = Column("price", Float)
   status = Column("status", String) # pendente, finalizado, cancelado
-  # items = 
+  items = relationship("Order_Items", cascade="all, delete")
   
   def __init__(self, customer, price=0, status="PENDING"):
     self.customer = customer
     self.price = price
     self.status = status
+    
+  def calculate_price(self):
+    # order_price = 0
+    # for item in self.items:
+    #   item_price = item.unit_price * item.amount
+    #   order_price += item_price
+    self.price = sum(item.unit_price * item.amount for item in self.items)
 
 # Itens de um pedido
 class Order_Items(Base):
@@ -90,3 +97,6 @@ class Order_Items(Base):
     self.order = order
     
 # Executa a criação dos metadados do banco
+
+# alembic revision --autogenerate -m "msg"
+# alembic upgrade head
