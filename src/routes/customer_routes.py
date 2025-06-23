@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
-from src.models.models import Customer
+from src.models.models import Customer, User
 from src.schemas.customer_schema import CustomerSchema
 from sqlalchemy.orm import Session
-from src.services.session_dependencies_service import get_session
+from src.services.session_dependency_service import get_session
+from src.services.verify_token_dependency_service import verify_token
 
 customer_router = APIRouter(prefix="/api/customers", tags=["customers"])
 
 @customer_router.get("/")
-async def customers():
+async def customers(user: User = Depends(verify_token)):
   """
   This is the default customers route. Only authorized users can access it.
   """
