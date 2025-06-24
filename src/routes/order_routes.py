@@ -4,7 +4,9 @@ from src.services.session_dependency_service import get_session
 from src.services.verify_token_dependency_service import verify_token
 from src.schemas.order_schema import OrderSchema
 from src.schemas.item_order_schema import ItemOrderSchema
+from src.schemas.order_response_schema import OrderResponseSchema
 from src.models.models import Order, User, Order_Items
+from typing import List
 
 order_router = APIRouter(prefix="/api/orders", tags=["orders"], dependencies=[Depends(verify_token)])
 
@@ -24,6 +26,41 @@ async def create_order(order_schema: OrderSchema, session: Session = Depends(get
   session.add(new_order)
   session.commit()
   return {"message": f"Order created successfully. Order ID: {new_order.id}"}
+
+@order_router.get("/order/{id_order}")
+async def get_order_by_id(id_order: int, 
+                          session: Session = Depends(get_session), 
+                          user: User = Depends(verify_token)):
+  order = session.query(Order).filter(Order.id==id_order).first()
+  if not order:
+    raise HTTPException(status_code=400, detail="Order not found")
+  if not user.admin and user.id != order.customer:
+    raise HTTPException(status_code=401, detail="Authorization denied")
+  return {
+    # "id_order": order.id,
+    # "order_items_quantity": len(order.items),
+    # "order_items": order.items,
+    # "order_price": order.price,
+    # "order_status": order.status
+    "order_items_quantity": len(order.items),
+    "order": order
+  }
+  # return order
+  
+@order_router.get("/{id_customer}", response_model=List[OrderResponseSchema])
+async def get_orders_by_customer(id_customer: int,
+                                 session: Session = Depends(get_session), 
+                                 user: User = Depends(verify_token)):
+  if not user.admin:
+    raise HTTPException(status_code=401, detail="Authorization denied")
+  # order_item = session.query(Order_Items).filter(Order_Items.order==Order.id).first()  
+  orders_list = session.query(Order).filter(Order.customer==id_customer).all()
+  # return {
+  #   "orders_quantity": len(orders_list),
+  #   "orders_list": orders_list,
+  #   # "orders_items": order_item
+  # }
+  return orders_list
 
 @order_router.post("/order/{id_order}/cancel")
 async def cancel_order(id_order: int, 
@@ -59,7 +96,7 @@ async def add_order_item(id_order: int,
   order.calculate_price()
   session.commit()
   return {
-    "message": "Created item successfully",
+    "message": f"Item added successfully to order number {id_order}",
     "item_id": item_order.id,
     "order_price": order.price 
   }
