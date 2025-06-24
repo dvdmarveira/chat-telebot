@@ -82,3 +82,20 @@ async def remove_order_item(id_order_item: int,
     "order_items_quantity": len(order.items),
     "order": order
   }
+  
+@order_router.post("/order/{id_order}/complete")
+async def complete_order(id_order: int, 
+                       session: Session = Depends(get_session), 
+                       user: User = Depends(verify_token)):
+  order = session.query(Order).filter(Order.id==id_order).first()
+  if not order:
+    raise HTTPException(status_code=400, detail="Order not found")
+  if not user.admin and user.id != order.customer:
+    raise HTTPException(status_code=401, detail="Authorization denied")
+  order.status = "COMPLETED"
+  session.commit()
+  return {
+    "message": f"Order ID:{order.id} has been completed successfully.",
+    "order_items_quantity": len(order.items),
+    "order": order
+  }
