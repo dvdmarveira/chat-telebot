@@ -25,7 +25,7 @@ async def create_order(order_schema: OrderSchema, session: Session = Depends(get
   session.commit()
   return {"message": f"Order created successfully. Order ID: {new_order.id}"}
 
-@order_router.post("/order/cancel/{id_order}")
+@order_router.post("/order/{id_order}/cancel")
 async def cancel_order(id_order: int, 
                        session: Session = Depends(get_session), 
                        user: User = Depends(verify_token)):
@@ -36,13 +36,12 @@ async def cancel_order(id_order: int,
     raise HTTPException(status_code=401, detail="Authorization denied")
   order.status = "CANCELLED"
   session.commit()
-  
   return {
     "message": f"Order ID:{order.id} has been cancelled successfully.",
     "order": order
   }
   
-@order_router.post("/order/item/add/{id_order}")
+@order_router.post("/order/item/{id_order}/add")
 async def add_order_item(id_order: int, 
                          item_order_schema: ItemOrderSchema, 
                          session: Session = Depends(get_session), 
@@ -65,3 +64,21 @@ async def add_order_item(id_order: int,
     "order_price": order.price 
   }
   
+@order_router.post("/order/item/{id_order_item}/remove")
+async def remove_order_item(id_order_item: int, 
+                         session: Session = Depends(get_session), 
+                         user: User = Depends(verify_token)):
+  order_item = session.query(Order_Items).filter(Order_Items.id==id_order_item).first()
+  order = session.query(Order).filter(Order.id==order_item.order).first()
+  if not order_item:
+    raise HTTPException(status_code=400, detail="Order not found")
+  if not user.admin and user.id != order.customer:
+    raise HTTPException(status_code=401, detail="Authorization denied")
+  session.delete(order_item)
+  order.calculate_price()
+  session.commit()
+  return {
+    "message": "Item removed successfully",
+    "order_items_quantity": len(order.items),
+    "order": order
+  }
