@@ -51,18 +51,20 @@ class Order(Base):
   
   # ORDERS_STATUS = (
   #   ("PENDING", "PENDING"),
-  #   ("FINALIZED", "FINALIZED"),
+  #   ("FINALIZED", "COMPLETED"),
   #   ("CANCELLED", "CANCELLED"),
   # )
   
   id = Column("id", Integer, primary_key=True, autoincrement=True)
   customer = Column("customer", ForeignKey("customers.id"))
+  user = Column("user", ForeignKey("users.id"))
   price = Column("price", Float)
   status = Column("status", String) # pendente, finalizado, cancelado
   items = relationship("Order_Items", cascade="all, delete")
   
-  def __init__(self, customer, price=0, status="PENDING"):
+  def __init__(self, customer, user, price=0, status="PENDING"):
     self.customer = customer
+    self.user = user
     self.price = price
     self.status = status
     
