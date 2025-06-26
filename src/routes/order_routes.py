@@ -22,9 +22,18 @@ async def get_orders(session: Session = Depends(get_session), user: User = Depen
     
 @order_router.post("/order")
 async def create_order(order_schema: OrderSchema, session: Session = Depends(get_session)):
-  new_order = Order(customer=order_schema.customer)
+  if order_schema.user is not None:
+    user = session.get(User, order_schema.user)
+    if user is None:
+      raise HTTPException(status_code=400, detail="User not found")
+    user_id = user.id
+  else:
+    user_id = None
+  new_order = Order(customer=order_schema.customer, user=user_id)
   session.add(new_order)
   session.commit()
+  session.refresh(new_order)
+
   return {"message": f"Order created successfully. Order ID: {new_order.id}"}
 
 @order_router.get("/order/{id_order}")
