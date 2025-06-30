@@ -1,6 +1,6 @@
 # Chatbot Telegram 
 
-Projeto de chatbot do Telegram desenvolvido de forma personalizada para uma doceria.
+Projeto de chatbot do Telegram desenvolvido de forma personalizada para uma doceria..
 
 ## Stacks
 
