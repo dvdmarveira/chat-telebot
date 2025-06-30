@@ -56,7 +56,7 @@ async def get_order_by_id(id_order: int,
   }
   # return order
   
-@order_router.get("/{id_customer}", response_model=List[OrderResponseSchema])
+@order_router.get("/customer/{id_customer}", response_model=List[OrderResponseSchema])
 async def get_orders_by_customer(id_customer: int,
                                  session: Session = Depends(get_session), 
                                  user: User = Depends(verify_token)):
@@ -69,6 +69,15 @@ async def get_orders_by_customer(id_customer: int,
   #   "orders_list": orders_list,
   #   # "orders_items": order_item
   # }
+  return orders_list
+
+@order_router.get("/user/{id_user}", response_model=List[OrderResponseSchema])
+async def get_orders_by_user(id_user: int,
+                             session: Session = Depends(get_session),
+                             user: User = Depends(verify_token)):
+  if not user.admin:
+    raise HTTPException(status_code=401, detail="Authorization denied")
+  orders_list = session.query(Order).filter(Order.user==id_user).all()
   return orders_list
 
 @order_router.post("/order/{id_order}/cancel")
