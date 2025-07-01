@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from src.services.session_dependency_service import get_session
 from src.services.verify_token_dependency_service import verify_token
@@ -6,19 +6,34 @@ from src.schemas.order_schema import OrderSchema
 from src.schemas.item_order_schema import ItemOrderSchema
 from src.schemas.order_response_schema import OrderResponseSchema
 from src.models.models import Order, User, Order_Items
-from typing import List
+from typing import List, Optional
 
 order_router = APIRouter(prefix="/api/orders", tags=["orders"], dependencies=[Depends(verify_token)])
 
 @order_router.get("/") #/api/orders
-async def get_orders(session: Session = Depends(get_session), user: User = Depends(verify_token)):
+async def get_orders(
+  customer_id: Optional[int] = Query(None, description="Filter orders by customer ID"), 
+  user_id: Optional[int] = Query(None, description="Filter orders by user ID"),
+  session: Session = Depends(get_session), 
+  user: User = Depends(verify_token)):
   if not user.admin:
     raise HTTPException(status_code=401, detail="Authorization denied")
-  else:
-    orders = session.query(Order).all()
-    return {
-      "orders": orders
+  
+  query = session.query(Order)
+  if customer_id is not None:
+    query = query.filter(Order.customer==customer_id)
+  elif user_id is not None:
+    query = query.filter(Order.user==user_id)
+    
+  orders = query.all()
+  return {
+    "orders": orders
     }
+  # else:
+  #   orders = session.query(Order).all()
+  #   return {
+  #     "orders": orders
+  #   }
     
 @order_router.post("/order")
 async def create_order(order_schema: OrderSchema, session: Session = Depends(get_session)):
@@ -46,39 +61,27 @@ async def get_order_by_id(id_order: int,
   if not user.admin and user.id != order.customer:
     raise HTTPException(status_code=401, detail="Authorization denied")
   return {
-    # "id_order": order.id,
-    # "order_items_quantity": len(order.items),
-    # "order_items": order.items,
-    # "order_price": order.price,
-    # "order_status": order.status
     "order_items_quantity": len(order.items),
     "order": order
   }
-  # return order
   
-@order_router.get("/customer/{id_customer}", response_model=List[OrderResponseSchema])
-async def get_orders_by_customer(id_customer: int,
-                                 session: Session = Depends(get_session), 
-                                 user: User = Depends(verify_token)):
-  if not user.admin:
-    raise HTTPException(status_code=401, detail="Authorization denied")
-  # order_item = session.query(Order_Items).filter(Order_Items.order==Order.id).first()  
-  orders_list = session.query(Order).filter(Order.customer==id_customer).all()
-  # return {
-  #   "orders_quantity": len(orders_list),
-  #   "orders_list": orders_list,
-  #   # "orders_items": order_item
-  # }
-  return orders_list
+# @order_router.get("/customer/{id_customer}", response_model=List[OrderResponseSchema])
+# async def get_orders_by_customer(id_customer: int,
+#                                  session: Session = Depends(get_session), 
+#                                  user: User = Depends(verify_token)):
+#   if not user.admin:
+#     raise HTTPException(status_code=401, detail="Authorization denied") 
+#   orders_list = session.query(Order).filter(Order.customer==id_customer).all()
+#   return orders_list
 
-@order_router.get("/user/{id_user}", response_model=List[OrderResponseSchema])
-async def get_orders_by_user(id_user: int,
-                             session: Session = Depends(get_session),
-                             user: User = Depends(verify_token)):
-  if not user.admin:
-    raise HTTPException(status_code=401, detail="Authorization denied")
-  orders_list = session.query(Order).filter(Order.user==id_user).all()
-  return orders_list
+# @order_router.get("/user/{id_user}", response_model=List[OrderResponseSchema])
+# async def get_orders_by_user(id_user: int,
+#                              session: Session = Depends(get_session),
+#                              user: User = Depends(verify_token)):
+#   if not user.admin:
+#     raise HTTPException(status_code=401, detail="Authorization denied")
+#   orders_list = session.query(Order).filter(Order.user==id_user).all()
+#   return orders_list
 
 @order_router.post("/order/{id_order}/cancel")
 async def cancel_order(id_order: int, 
