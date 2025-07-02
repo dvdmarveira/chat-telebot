@@ -83,17 +83,25 @@ async def get_order_by_id(id_order: int,
 #   orders_list = session.query(Order).filter(Order.user==id_user).all()
 #   return orders_list
 
-@order_router.post("/order/{id_order}/cancel")
+@order_router.patch("/order/{id_order}")
 async def cancel_order(id_order: int, 
                        session: Session = Depends(get_session), 
                        user: User = Depends(verify_token)):
   order = session.query(Order).filter(Order.id==id_order).first()
   if not order:
-    raise HTTPException(status_code=400, detail="Order not found")
+    raise HTTPException(status_code=404, detail="Order not found")
   if not user.admin and user.id != order.customer:
-    raise HTTPException(status_code=401, detail="Authorization denied")
+    raise HTTPException(status_code=403, detail="Authorization denied")
+  
+  if order.status == "CANCELLED":
+    return {
+      "message": f"Order ID:{order.id} is already cancelled.",
+      "order": order
+    }
+    
   order.status = "CANCELLED"
   session.commit()
+  
   return {
     "message": f"Order ID:{order.id} has been cancelled successfully.",
     "order": order
