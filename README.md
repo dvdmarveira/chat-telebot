@@ -1,9 +1,3 @@
-# Chatbot Telegram 
+# Sistema de Pedidos para Restaurante
 
-Projeto de chatbot do Telegram desenvolvido de forma personalizada para uma doceria..
-
-## Stacks
-
-- Python 3.13.2 
-- Bot do Telegram [@BotFather](https://t.me/BotFather)
-
+API de um sistema de gestão de pedidos para bares e, principalmente, restaurantes.
